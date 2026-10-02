@@ -16,7 +16,7 @@ class RestaurantTest {
     private Restaurant restaurant;
 
     @BeforeEach
-    public void CreerRestaurant(){
+    public void CreateRestaurant(){
         restaurant = new Restaurant();
     }
 
@@ -24,7 +24,7 @@ class RestaurantTest {
     public void givenNoPeople_whenReserve_thenThrowException(){
         Executable reserve = () -> restaurant.reserve(0, ANY_NAME, ANY_FUTUR_DATE_TIME_IN_MORE_THAN_THREE_HOURS);
 
-        assertThrows(Exception.class, reserve);
+        assertThrows(ReservationInvalidException.class, reserve);
     }
 
     @Test
@@ -33,7 +33,7 @@ class RestaurantTest {
 
         Executable reserve = () -> restaurant.reserve(ANY_NB_PEOPLE_UNDER_40, ANY_NAME, reservationDateTimeBeforeNow);
 
-        assertThrows(Exception.class, reserve);
+        assertThrows(ReservationInvalidException.class, reserve);
     }
 
     @Test
@@ -42,7 +42,7 @@ class RestaurantTest {
 
         Executable reserve = () -> restaurant.reserve(ANY_NB_PEOPLE_UNDER_40, ANY_NAME, reservationDateTimeInLessThan3Hours);
 
-        assertThrows(Exception.class, reserve);
+        assertThrows(ReservationInvalidException.class, reserve);
     }
 
     @Test
@@ -55,7 +55,7 @@ class RestaurantTest {
 
         Executable reserve = () -> restaurant.reserve(moreThanRemainingCapacity, ANY_NAME, ANY_FUTUR_DATE_TIME_IN_MORE_THAN_THREE_HOURS);
 
-        assertThrows(Exception.class, reserve);
+        assertThrows(CapacityReachedException.class, reserve);
     }
 
     @Test

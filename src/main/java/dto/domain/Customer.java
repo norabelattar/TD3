@@ -1,6 +1,5 @@
 package dto.domain;
 
-import dto.api.CartDto;
 
 public class Customer {
     private String email;
@@ -13,8 +12,7 @@ public class Customer {
         this.paiementMethod = paiementMethod;
     }
 
-    public void confirmCart(CartDto cartDto){
-        Cart cart = new Cart(cartDto.items);
+    public void confirmCart(Cart cart){
         cart.confirm(paiementMethod);
     }
 }

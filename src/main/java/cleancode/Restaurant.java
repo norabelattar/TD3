@@ -1,6 +1,5 @@
 package cleancode;
 
-import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -9,27 +8,61 @@ import java.util.List;
 import java.util.Map;
 
 public class Restaurant {
-    private final Map<LocalDateTime, Integer> people;
-    private final List<Reservation> res;
+    private final Map<LocalDateTime, Integer> reservedSeatsPerDay;
+    private final List<Reservation> reservations;
+    private static final int MINIMUM_OF_SEATS_PER_RESERVATION = 1;
+    private static final int MINIMUM_RESERVATION_DELAY_IN_HOURS = 3;
+    private static final int MAXIMUM_CAPACITY = 40;
 
     public Restaurant(){
-        people = new HashMap<>();
-        res = new ArrayList<>();
+        reservedSeatsPerDay = new HashMap<>();
+        reservations = new ArrayList<>();
     }
 
-    public String reserve(int p, String n, LocalDateTime date){
-        if(p>1 && date.isAfter(LocalDateTime.now().plusHours(3))) {
-            if (40 - people.getOrDefault(date, 0) < p) {
-                throw new RuntimeException("Not enough places available on that day!");
-            }
-
-            people.put(date, people.getOrDefault(date, 0) + p);
-
-            res.add(new Reservation(date, n, p));
-
-            //Return reservation confirmation id: {name}-{reservationNumber}-{dateOfReservation format yyyyMMdd}
-            return String.format("%s-%s-%s", n, res.size(), date.format(DateTimeFormatter.ofPattern("yyyyMMdd")));
+    public String reserve(int numberOfSeats, String person, LocalDateTime dateTime){
+        if(isReservationInvalid(numberOfSeats, dateTime)) {
+            throw new ReservationInvalidException();
         }
-        throw new RuntimeException("Reservation cannot be done!");
+        if (isCapacityReached(numberOfSeats, dateTime)) {
+            throw new CapacityReachedException();
+        }
+        updateReservedSeats(numberOfSeats, dateTime);
+        addReservation(numberOfSeats, person, dateTime);
+
+        return createConfirmation(person, dateTime);
+    }
+
+    private void addReservation(int numberOfSeats, String person, LocalDateTime dateTime) {
+        Reservation reservation = new Reservation(dateTime, person, numberOfSeats);
+        reservations.add(reservation);
+    }
+
+    private void updateReservedSeats(int numberOfSeats, LocalDateTime dateTime) {
+        reservedSeatsPerDay.put(dateTime, reservedSeatsPerDay.getOrDefault(dateTime, 0) + numberOfSeats);
+    }
+
+    private String createConfirmation(String person, LocalDateTime dateTime) {
+        return String.format("%s-%s-%s", person, reservations.size(), dateTime.format(DateTimeFormatter.ofPattern("yyyyMMdd")));
+    }
+
+    private boolean isMinimalSeatPerReservation(int numberOfSeats) {
+        return numberOfSeats < MINIMUM_OF_SEATS_PER_RESERVATION;
+    }
+
+    private boolean isReservationDelayRespected(LocalDateTime dateTime) {
+        return dateTime.isBefore(LocalDateTime.now().plusHours(MINIMUM_RESERVATION_DELAY_IN_HOURS));
+    }
+
+    private boolean isReservationInvalid(int numberOfSeats, LocalDateTime dateTime) {
+        return isMinimalSeatPerReservation(numberOfSeats) || isReservationDelayRespected(dateTime);
+    }
+
+    private boolean isCapacityReached(int numberOfSeats, LocalDateTime dateTime){
+        int previousReservedSeats = getPreviouslyReservedSeats(dateTime);
+        return MAXIMUM_CAPACITY - previousReservedSeats < numberOfSeats;
+    }
+
+    private int getPreviouslyReservedSeats(LocalDateTime dateTime) {
+        return reservedSeatsPerDay.getOrDefault(dateTime,0);
     }
 }
